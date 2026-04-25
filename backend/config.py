@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     JELLYFIN_URL: str = "http://localhost:8096"
     JELLYFIN_API_KEY: str = ""
+    DATABASE_URL: str = "postgresql+asyncpg://finstat:finstat@localhost:5432/finstat"
+    CACHE_TTL_SECONDS: int = 30
 
 
 @lru_cache
