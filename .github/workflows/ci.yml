@@ -7,6 +7,53 @@ on:
     branches: [develop]
 
 jobs:
+  # -------------------------------------------------------
+  # Schreibstil-Pruefung: kein Eszett im gesamten Projekt
+  # -------------------------------------------------------
+  eszett-check:
+    name: Eszett-Check (ss statt ß)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nach Eszett suchen
+        run: |
+          # Durchsuche alle relevanten Dateien nach dem Zeichen ß.
+          # Ausgeschlossen: Binaerdateien, node_modules, .git, Lockfiles, Bilder.
+          FOUND=$(grep -rn "ß" \
+            --include="*.py" \
+            --include="*.ts" \
+            --include="*.tsx" \
+            --include="*.js" \
+            --include="*.jsx" \
+            --include="*.md" \
+            --include="*.yml" \
+            --include="*.yaml" \
+            --include="*.json" \
+            --include="*.css" \
+            --include="*.html" \
+            --exclude-dir=node_modules \
+            --exclude-dir=.next \
+            --exclude-dir=.git \
+            --exclude="package-lock.json" \
+            . || true)
+
+          if [ -n "$FOUND" ]; then
+            echo "::error::Eszett (ß) gefunden! Bitte durch 'ss' ersetzen."
+            echo ""
+            echo "Betroffene Stellen:"
+            echo "$FOUND"
+            echo ""
+            echo "Hinweis: In diesem Projekt wird durchgaengig 'ss' statt 'ß' verwendet."
+            echo "Siehe CONTRIBUTING.md fuer Details zur Schreibstil-Konvention."
+            exit 1
+          fi
+
+          echo "Kein Eszett gefunden – alles in Ordnung."
+
+  # -------------------------------------------------------
+  # Backend: Python-Linting und Formatierung
+  # -------------------------------------------------------
   backend:
     name: Backend (Python)
     runs-on: ubuntu-latest
@@ -31,9 +78,12 @@ jobs:
       - name: Lint with Ruff
         run: ruff check .
 
-      - name: Type check with Ruff
+      - name: Check formatting with Ruff
         run: ruff format --check .
 
+  # -------------------------------------------------------
+  # Frontend: ESLint + Produktions-Build
+  # -------------------------------------------------------
   frontend:
     name: Frontend (Next.js)
     runs-on: ubuntu-latest
