@@ -173,6 +173,10 @@ cd frontend && npm run build && npm start
 
 ---
 
+## Beitragen
+
+Beitraege sind willkommen! Lies die [CONTRIBUTING.md](./CONTRIBUTING.md) fuer Workflow, Code-Richtlinien und die ss-Schreibkonvention.
+
 ## Lizenz
 
-Siehe [LICENSE](./LICENSE).
+MIT – siehe [LICENSE](./LICENSE).
