@@ -19,40 +19,46 @@ Ein modernes, dunkles Monitoring-Dashboard fuer deinen Jellyfin-Server. Gebaut m
 
 ## Tech-Stack
 
-| Bereich    | Technologie                          |
-|------------|--------------------------------------|
-| Backend    | Python 3.12+, FastAPI, httpx, psutil |
-| Frontend   | Next.js 16, React 19, TypeScript 5   |
-| UI         | Tailwind CSS v4, shadcn/ui           |
-| Diagramme  | Recharts                             |
-| API        | Jellyfin REST API                    |
+| Bereich    | Technologie                                       |
+|------------|---------------------------------------------------|
+| Backend    | Python 3.12+, FastAPI, SQLAlchemy, httpx, psutil  |
+| Datenbank  | PostgreSQL 17, Alembic (Migrationen)              |
+| Frontend   | Next.js 16, React 19, TypeScript 5                |
+| UI         | Tailwind CSS v4, shadcn/ui                        |
+| Diagramme  | Recharts                                          |
+| Caching    | DB-basierter API-Cache (konfigurierbare TTL)      |
+| Deployment | Docker, Docker Compose, Multi-Stage Builds        |
+| API        | Jellyfin REST API                                 |
 
 ## Projektstruktur
 
 ```
 FinStat/
+├── docker-compose.yml        # Alle Services starten
+├── .env.example              # Umgebungsvariablen (Docker)
 ├── backend/
-│   ├── main.py              # FastAPI App-Einstiegspunkt
+│   ├── main.py               # FastAPI App-Einstiegspunkt
 │   ├── config.py             # Pydantic Settings (.env)
+│   ├── database.py           # SQLAlchemy Async-Engine
+│   ├── Dockerfile            # Multi-Stage Build
 │   ├── requirements.txt
 │   ├── .env.example
+│   ├── models/               # Datenbankmodelle
+│   │   ├── user.py           # Jellyfin-Nutzer
+│   │   ├── session_log.py    # Session-Snapshots
+│   │   ├── library_stats.py  # Bibliotheks-Zaehler
+│   │   ├── watch_history.py  # Wiedergabe-Verlauf
+│   │   └── api_cache.py      # API-Response-Cache
 │   ├── services/
-│   │   └── jellyfin.py       # Jellyfin API Client
-│   └── routers/
-│       ├── system.py         # CPU/RAM + Serverinfo
-│       ├── sessions.py       # Aktive Sessions
-│       ├── library.py        # Bibliotheks-Zaehler + Neuheiten
-│       ├── stats.py          # Meistgesehen-Statistiken
-│       └── history.py        # Wiedergabe-Verlauf
+│   │   ├── jellyfin.py       # Jellyfin API Client
+│   │   └── cache.py          # DB-basierter Cache-Service
+│   ├── routers/              # API-Endpunkte
+│   └── alembic/              # Datenbankmigrationen
 ├── frontend/
+│   ├── Dockerfile            # Multi-Stage Build (Standalone)
 │   ├── src/
 │   │   ├── app/              # Next.js App Router Seiten
 │   │   ├── components/       # React-Komponenten
-│   │   │   ├── ui/           # shadcn/ui Basiskomponenten
-│   │   │   ├── layout/       # Sidebar
-│   │   │   ├── dashboard/    # Stat-Cards, Stream-Preview
-│   │   │   ├── sessions/     # Session-Karten
-│   │   │   └── stats/        # Chart-Komponente
 │   │   ├── lib/              # API-Client, Hooks, Utilities
 │   │   └── types/            # TypeScript-Interfaces
 │   ├── package.json
@@ -64,20 +70,85 @@ FinStat/
 
 ## Voraussetzungen
 
-- **Python** 3.12 oder hoeher
-- **Node.js** 20 oder hoeher
+- **Docker** und **Docker Compose** (empfohlen)
+- Oder: Python 3.12+, Node.js 20+, PostgreSQL 17+
 - **Jellyfin-Server** mit aktiviertem API-Zugang
 - Ein **API-Schluessel** aus dem Jellyfin-Dashboard (Einstellungen → API-Schluessel)
 
 ---
 
-## Setup
+## Installation mit Docker (empfohlen)
 
-### 1. Repository klonen
+Mit Docker startest du das gesamte Projekt mit einem einzigen Befehl:
 
 ```bash
+# 1. Repository klonen
 git clone https://github.com/<dein-user>/FinStat.git
 cd FinStat
+
+# 2. Umgebungsvariablen konfigurieren
+cp .env.example .env
+```
+
+Bearbeite `.env` und trage deine Jellyfin-Daten ein:
+
+```env
+JELLYFIN_URL=http://dein-jellyfin-server:8096
+JELLYFIN_API_KEY=dein-api-schluessel
+```
+
+```bash
+# 3. Alles starten
+docker compose up -d
+```
+
+Das wars! Die drei Container starten automatisch in der richtigen Reihenfolge:
+
+1. **finstat-db** – PostgreSQL-Datenbank (wartet auf Healthcheck)
+2. **finstat-backend** – FastAPI-API (wartet auf DB-Healthcheck)
+3. **finstat-frontend** – Next.js-Dashboard (wartet auf Backend-Healthcheck)
+
+| Service   | URL                          |
+|-----------|------------------------------|
+| Dashboard | http://localhost:3000         |
+| API       | http://localhost:8000         |
+| API-Docs  | http://localhost:8000/docs    |
+
+### Docker-Befehle
+
+```bash
+# Status pruefen
+docker compose ps
+
+# Logs anzeigen
+docker compose logs -f
+
+# Stoppen
+docker compose down
+
+# Stoppen und Datenbank loeschen
+docker compose down -v
+
+# Neu bauen (nach Code-Aenderungen)
+docker compose up -d --build
+```
+
+---
+
+## Manuelles Setup (ohne Docker)
+
+### 1. PostgreSQL einrichten
+
+Stelle sicher, dass eine PostgreSQL-Instanz laeuft:
+
+```bash
+# Mit Docker (nur die Datenbank)
+docker run -d --name finstat-db \
+  -e POSTGRES_USER=finstat \
+  -e POSTGRES_PASSWORD=finstat \
+  -e POSTGRES_DB=finstat \
+  -p 5432:5432 \
+  postgres:17-alpine
 ```
 
 ### 2. Backend einrichten
@@ -88,7 +159,6 @@ cd backend
 # Virtuelle Umgebung erstellen und aktivieren
 python -m venv .venv
 source .venv/bin/activate   # Linux/macOS
-# .venv\Scripts\activate    # Windows
 
 # Abhaengigkeiten installieren
 pip install -r requirements.txt
@@ -97,24 +167,26 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Bearbeite `backend/.env` und trage deine Jellyfin-Daten ein:
+Bearbeite `backend/.env`:
 
 ```env
 JELLYFIN_URL=http://dein-jellyfin-server:8096
 JELLYFIN_API_KEY=dein-api-schluessel
+DATABASE_URL=postgresql+asyncpg://finstat:finstat@localhost:5432/finstat
+CACHE_TTL_SECONDS=30
 ```
 
-### 3. Backend starten
-
 ```bash
-cd backend
+# Datenbank-Migrationen ausfuehren
+alembic upgrade head
+
+# Backend starten
 uvicorn main:app --reload --port 8000
 ```
 
-Die API ist dann unter `http://localhost:8000` erreichbar.
-Die interaktive API-Dokumentation findest du unter `http://localhost:8000/docs`.
+Die API ist unter `http://localhost:8000` erreichbar, Docs unter `http://localhost:8000/docs`.
 
-### 4. Frontend einrichten
+### 3. Frontend einrichten
 
 ```bash
 cd frontend
@@ -124,16 +196,12 @@ npm install
 
 # Konfiguration anlegen (optional, Standard ist localhost:8000)
 cp .env.example .env.local
-```
 
-### 5. Frontend starten
-
-```bash
-cd frontend
+# Frontend starten
 npm run dev
 ```
 
-Das Dashboard ist dann unter `http://localhost:3000` erreichbar.
+Das Dashboard ist unter `http://localhost:3000` erreichbar.
 
 ---
 
@@ -163,6 +231,21 @@ cd backend && uvicorn main:app --reload
 
 ```bash
 cd frontend && npm run dev
+```
+
+### Datenbank-Migrationen
+
+```bash
+cd backend
+
+# Neue Migration erstellen (nach Model-Aenderungen)
+alembic revision --autogenerate -m "Beschreibung der Aenderung"
+
+# Migrationen ausfuehren
+alembic upgrade head
+
+# Eine Migration zurueckrollen
+alembic downgrade -1
 ```
 
 ### Produktions-Build (Frontend)
