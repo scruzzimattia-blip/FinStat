@@ -6,14 +6,14 @@ Vielen Dank fuer dein Interesse, an FinStat mitzuarbeiten! Hier findest du alle 
 
 ## Schreibstil-Konvention
 
-> **Wichtig:** In diesem Projekt wird durchgaengig **ss** statt **ß** verwendet.
+> **Wichtig:** In diesem Projekt wird durchgaengig **ss** statt des scharfen S (Eszett, Unicode U+00DF) verwendet.
 > Das gilt fuer Code-Kommentare, Docstrings, UI-Texte, Commit-Messages und Dokumentation.
 >
-> Beispiele: _"grosse"_ statt _"große"_, _"muss"_ statt _"muß"_, _"schliessen"_ statt _"schließen"_.
+> Beispiele: schreibe grosse, schliessen, Masse, Auslassung – immer mit doppeltem s, nie mit U+00DF.
 
-Umlaute (ä, ö, ü) bleiben erhalten. Nur das Eszett wird ersetzt.
+Umlaute (a, o, u mit Trema) bleiben erhalten. Es wird nur U+00DF vermieden.
 
-Die CI-Pipeline prueft dies automatisch. Wenn ein ß im Code, in Kommentaren oder Texten gefunden wird, schlaegt der Build fehl. Der Job heisst **"Eszett-Check (ss statt ß)"** und durchsucht alle `.py`, `.ts`, `.tsx`, `.js`, `.md`, `.yml`, `.json` und `.css`-Dateien.
+Die CI-Pipeline prueft dies automatisch. Wenn U+00DF im Code, in Kommentaren oder Texten vorkommt, schlaegt der Build fehl. Der Job heisst **"Eszett-Check (ss-Regel)"** und durchsucht alle `.py`, `.ts`, `.tsx`, `.js`, `.md`, `.yml`, `.json` und `.css`-Dateien.
 
 ---
 
@@ -131,7 +131,7 @@ Bevor ein PR gemergt werden kann, muessen folgende Checks bestehen:
 
 | Check                    | Prueft                                         |
 |--------------------------|------------------------------------------------|
-| Eszett-Check (ss statt ß)| Kein ß in Code, Kommentaren oder Dokumentation |
+| Eszett-Check (ss-Regel)  | Kein U+00DF in Code, Kommentaren oder Dokumentation |
 | Backend (Python)         | Ruff Linting + Formatierung                    |
 | Frontend (Next.js)       | ESLint + Produktions-Build                     |
 

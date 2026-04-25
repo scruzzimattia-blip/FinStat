@@ -274,17 +274,17 @@ feature/mein-feature  →  PR gegen develop  →  Review + Merge
 ```
 
 1. **Mitwirkende** erstellen Feature-Branches und oeffnen PRs gegen `develop`.
-2. **CI** prueft automatisch: Linting, Build und die **ss-statt-ß-Regel** (der Build schlaegt fehl, wenn ein ß gefunden wird).
+2. **CI** prueft automatisch: Linting, Build und die **ss-Regel** (der Build schlaegt fehl, wenn U+00DF, das scharfe S, vorkommt).
 3. Nach Review wird per **Squash Merge** in `develop` gemergt.
 4. **Releases**: Ein Maintainer erstellt einen PR von `develop` → `main`. Beim Merge wird automatisch:
    - Die naechste SemVer-Version berechnet (basierend auf Commit-Praefixen)
    - Ein Git-Tag erstellt
    - Ein GitHub Release mit automatisch generierten Release-Notes veroeffentlicht
 
-### Schreibstil: ss statt ß
+### Schreibstil: Doppel-s (ss) statt Eszett
 
-> In diesem Projekt wird durchgaengig **ss** statt **ß** verwendet.
-> Die CI-Pipeline prueft dies automatisch – ein ß im Code, in Kommentaren oder Texten fuehrt zum Build-Fehler.
+> In diesem Projekt wird durchgaengig **ss** statt des historischen s-Zeichens (Eszett) verwendet.
+> Die CI-Pipeline prueft dies automatisch – U+00DF im Code, in Kommentaren oder Texten fuehrt zum Build-Fehler.
 
 Siehe [CONTRIBUTING.md](./CONTRIBUTING.md) fuer alle Details.
 

@@ -32,7 +32,7 @@ gh api repos/"$REPO"/branches/main/protection \
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "Eszett-Check (ss statt ß)",
+      "Eszett-Check (ss-Regel)",
       "Backend (Python)",
       "Frontend (Next.js)"
     ]
@@ -53,7 +53,7 @@ gh api repos/"$REPO"/branches/develop/protection \
   "required_status_checks": {
     "strict": true,
     "contexts": [
-      "Eszett-Check (ss statt ß)",
+      "Eszett-Check (ss-Regel)",
       "Backend (Python)",
       "Frontend (Next.js)"
     ]

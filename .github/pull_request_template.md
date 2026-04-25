@@ -21,7 +21,7 @@
 
 ## Checkliste
 
-- [ ] Mein Code folgt der **ss statt ß** Konvention (kein Eszett im Code, Kommentaren oder Texten)
+- [ ] Mein Code folgt der **ss-Regel** (kein U+00DF / scharfes S im Code, Kommentaren oder Texten)
 - [ ] Ich habe meine Aenderungen lokal getestet
 - [ ] Ich habe den Linter ohne Fehler durchlaufen lassen
 - [ ] Vorhandene Tests laufen weiterhin durch

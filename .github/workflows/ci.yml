@@ -11,16 +11,18 @@ jobs:
   # Schreibstil-Pruefung: kein Eszett im gesamten Projekt
   # -------------------------------------------------------
   eszett-check:
-    name: Eszett-Check (ss statt ß)
+    # Name ohne verbotenes Zeichen (U+00DF) – muss sonst der Check sich selbst findet
+    name: Eszett-Check (ss-Regel)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Nach Eszett suchen
         run: |
-          # Durchsuche alle relevanten Dateien nach dem Zeichen ß.
+          # Suche U+00DF (UTF-8: C3 9F) per Variable – diese Datei enthaelt niemals das Zeichen wortwörtlich
           # Ausgeschlossen: Binaerdateien, node_modules, .git, Lockfiles, Bilder.
-          FOUND=$(grep -rn "ß" \
+          BANNED=$(printf '\303\237')
+          FOUND=$(grep -rnF "$BANNED" \
             --include="*.py" \
             --include="*.ts" \
             --include="*.tsx" \
@@ -39,17 +41,17 @@ jobs:
             . || true)
 
           if [ -n "$FOUND" ]; then
-            echo "::error::Eszett (ß) gefunden! Bitte durch 'ss' ersetzen."
+            echo "::error::Eszett (U+00DF) gefunden! Bitte durch ss ersetzen."
             echo ""
             echo "Betroffene Stellen:"
             echo "$FOUND"
             echo ""
-            echo "Hinweis: In diesem Projekt wird durchgaengig 'ss' statt 'ß' verwendet."
-            echo "Siehe CONTRIBUTING.md fuer Details zur Schreibstil-Konvention."
+            echo "Hinweis: In diesem Projekt wird durchgaengig doppel-s (ss) statt Eszett verwendet."
+            echo "Siehe CONTRIBUTING.md fuer die Schreibstil-Konvention."
             exit 1
           fi
 
-          echo "Kein Eszett gefunden – alles in Ordnung."
+          echo "Kein verbotenes Zeichen gefunden – alles in Ordnung."
 
   # -------------------------------------------------------
   # Backend: Python-Linting und Formatierung
