@@ -46,11 +46,13 @@ class CacheService:
             entry.data = serialized
             entry.expires_at = expires
         else:
-            self._db.add(ApiCache(
-                cache_key=key,
-                data=serialized,
-                expires_at=expires,
-            ))
+            self._db.add(
+                ApiCache(
+                    cache_key=key,
+                    data=serialized,
+                    expires_at=expires,
+                )
+            )
 
         await self._db.commit()
 

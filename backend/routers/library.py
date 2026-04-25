@@ -35,7 +35,9 @@ class RecentItem(BaseModel):
     series_name: str | None = None
 
 
-def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> JellyfinService:
+def _get_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> JellyfinService:
     return JellyfinService(settings)
 
 

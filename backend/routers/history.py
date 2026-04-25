@@ -25,7 +25,9 @@ class HistoryEntry(BaseModel):
     play_duration: str | None = None
 
 
-def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> JellyfinService:
+def _get_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> JellyfinService:
     return JellyfinService(settings)
 
 
@@ -83,14 +85,16 @@ async def get_watch_history(
             hours, minutes = divmod(total_min, 60)
             duration = f"{hours}h {minutes}min" if hours else f"{minutes} min"
 
-            entries.append({
-                "id": item.get("Id", ""),
-                "user_name": user_name,
-                "item_name": item.get("Name", ""),
-                "item_type": item.get("Type", ""),
-                "date_played": user_data.get("LastPlayedDate"),
-                "play_duration": duration,
-            })
+            entries.append(
+                {
+                    "id": item.get("Id", ""),
+                    "user_name": user_name,
+                    "item_name": item.get("Name", ""),
+                    "item_type": item.get("Type", ""),
+                    "date_played": user_data.get("LastPlayedDate"),
+                    "play_duration": duration,
+                }
+            )
 
     entries.sort(key=lambda e: e.get("date_played") or "", reverse=True)
 

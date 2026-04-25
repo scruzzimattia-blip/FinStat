@@ -27,7 +27,9 @@ class SystemInfoResponse(BaseModel):
     os: str
 
 
-def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> JellyfinService:
+def _get_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> JellyfinService:
     return JellyfinService(settings)
 
 

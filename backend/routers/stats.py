@@ -24,7 +24,9 @@ class MostWatchedItem(BaseModel):
     year: int | None = None
 
 
-def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> JellyfinService:
+def _get_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> JellyfinService:
     return JellyfinService(settings)
 
 
