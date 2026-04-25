@@ -21,7 +21,8 @@ gh repo edit "$REPO" \
   --delete-branch-on-merge \
   --enable-squash-merge \
   --enable-merge-commit=false \
-  --enable-rebase-merge=false
+  --enable-rebase-merge=false \
+  --default-branch develop
 
 echo "==> Branch-Protection fuer main aktivieren..."
 gh api repos/"$REPO"/branches/main/protection \
@@ -30,7 +31,11 @@ gh api repos/"$REPO"/branches/main/protection \
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["Backend (Python)", "Frontend (Next.js)"]
+    "contexts": [
+      "Eszett-Check (ss statt ß)",
+      "Backend (Python)",
+      "Frontend (Next.js)"
+    ]
   },
   "enforce_admins": false,
   "required_pull_request_reviews": {
@@ -40,12 +45,37 @@ gh api repos/"$REPO"/branches/main/protection \
 }
 JSON
 
+echo "==> Branch-Protection fuer develop aktivieren..."
+gh api repos/"$REPO"/branches/develop/protection \
+  --method PUT \
+  --input - <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "Eszett-Check (ss statt ß)",
+      "Backend (Python)",
+      "Frontend (Next.js)"
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1
+  },
+  "restrictions": null
+}
+JSON
+
+echo ""
 echo "==> Fertig! Repository-Settings wurden konfiguriert."
 echo ""
 echo "Zusammenfassung:"
 echo "  - Description + Topics gesetzt"
+echo "  - Default-Branch: develop"
 echo "  - Issues + Discussions aktiviert"
 echo "  - Wiki deaktiviert"
 echo "  - Nur Squash-Merge erlaubt"
 echo "  - Branch nach Merge automatisch loeschen"
 echo "  - main-Branch geschuetzt (PR + CI erforderlich)"
+echo "  - develop-Branch geschuetzt (PR + CI erforderlich)"
+echo "  - CI-Checks: Eszett-Check, Backend (Python), Frontend (Next.js)"
