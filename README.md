@@ -173,9 +173,43 @@ cd frontend && npm run build && npm start
 
 ---
 
+## Branch-Strategie & Releases
+
+Dieses Projekt verwendet zwei Haupt-Branches:
+
+| Branch    | Zweck                                                  |
+|-----------|--------------------------------------------------------|
+| `develop` | Aktive Entwicklung – alle PRs von Mitwirkenden gehen hierhin |
+| `main`    | Stabile Releases – nur ueber PRs von `develop` aktualisiert |
+
+### Ablauf
+
+```
+feature/mein-feature  →  PR gegen develop  →  Review + Merge
+                                                    ↓
+                              develop  →  PR gegen main  →  Automatisches Release
+```
+
+1. **Mitwirkende** erstellen Feature-Branches und oeffnen PRs gegen `develop`.
+2. **CI** prueft automatisch: Linting, Build und die **ss-statt-ß-Regel** (der Build schlaegt fehl, wenn ein ß gefunden wird).
+3. Nach Review wird per **Squash Merge** in `develop` gemergt.
+4. **Releases**: Ein Maintainer erstellt einen PR von `develop` → `main`. Beim Merge wird automatisch:
+   - Die naechste SemVer-Version berechnet (basierend auf Commit-Praefixen)
+   - Ein Git-Tag erstellt
+   - Ein GitHub Release mit automatisch generierten Release-Notes veroeffentlicht
+
+### Schreibstil: ss statt ß
+
+> In diesem Projekt wird durchgaengig **ss** statt **ß** verwendet.
+> Die CI-Pipeline prueft dies automatisch – ein ß im Code, in Kommentaren oder Texten fuehrt zum Build-Fehler.
+
+Siehe [CONTRIBUTING.md](./CONTRIBUTING.md) fuer alle Details.
+
+---
+
 ## Beitragen
 
-Beitraege sind willkommen! Lies die [CONTRIBUTING.md](./CONTRIBUTING.md) fuer Workflow, Code-Richtlinien und die ss-Schreibkonvention.
+Beitraege sind willkommen! Lies die [CONTRIBUTING.md](./CONTRIBUTING.md) fuer den vollstaendigen Workflow, Code-Richtlinien und die ss-Schreibkonvention.
 
 ## Lizenz
 

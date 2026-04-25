@@ -13,6 +13,27 @@ Vielen Dank fuer dein Interesse, an FinStat mitzuarbeiten! Hier findest du alle 
 
 Umlaute (ä, ö, ü) bleiben erhalten. Nur das Eszett wird ersetzt.
 
+Die CI-Pipeline prueft dies automatisch. Wenn ein ß im Code, in Kommentaren oder Texten gefunden wird, schlaegt der Build fehl. Der Job heisst **"Eszett-Check (ss statt ß)"** und durchsucht alle `.py`, `.ts`, `.tsx`, `.js`, `.md`, `.yml`, `.json` und `.css`-Dateien.
+
+---
+
+## Branch-Strategie
+
+Dieses Projekt nutzt zwei Haupt-Branches:
+
+| Branch    | Zweck                                                        |
+|-----------|--------------------------------------------------------------|
+| `develop` | Aktive Entwicklung – **alle PRs gehen hierhin**              |
+| `main`    | Stabile Releases – nur ueber PRs von `develop` aktualisiert |
+
+> **Wichtig:** Erstelle deine PRs immer gegen den `develop`-Branch, nicht gegen `main`.
+> PRs von `develop` → `main` werden nur von Maintainern fuer Releases erstellt.
+
+Beim Merge eines PRs von `develop` → `main` wird automatisch:
+- Die naechste SemVer-Version berechnet
+- Ein Git-Tag und GitHub Release erstellt
+- Release-Notes mit allen Aenderungen und Mitwirkenden generiert
+
 ---
 
 ## Voraussetzungen
@@ -94,13 +115,25 @@ Update README with Docker instructions
 git push origin feature/dein-feature-name
 ```
 
-Erstelle dann einen Pull Request gegen den `develop`-Branch. Beschreibe in der PR:
+Erstelle dann einen Pull Request **gegen den `develop`-Branch** (nicht `main`!). Das PR-Template erinnert dich daran und enthaelt eine Checkliste.
+
+Beschreibe in der PR:
 
 - **Was** du geaendert hast
 - **Warum** die Aenderung noetig ist
 - **Wie** man es testen kann
 
 PRs werden per **Squash Merge** zusammengefuehrt, um die Historie sauber zu halten.
+
+### CI-Checks
+
+Bevor ein PR gemergt werden kann, muessen folgende Checks bestehen:
+
+| Check                    | Prueft                                         |
+|--------------------------|------------------------------------------------|
+| Eszett-Check (ss statt ß)| Kein ß in Code, Kommentaren oder Dokumentation |
+| Backend (Python)         | Ruff Linting + Formatierung                    |
+| Frontend (Next.js)       | ESLint + Produktions-Build                     |
 
 ---
 
