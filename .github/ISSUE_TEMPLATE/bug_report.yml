@@ -1,0 +1,73 @@
+name: Bug Report
+description: Melde einen Fehler, damit wir ihn beheben koennen.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke, dass du dir die Zeit nimmst, einen Fehler zu melden!
+        Fuelle bitte die folgenden Felder so gut wie moeglich aus.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      description: Was ist passiert? Was haettest du stattdessen erwartet?
+      placeholder: "Das Dashboard zeigt keine aktiven Sessions an, obwohl..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zur Reproduktion
+      description: Wie koennen wir den Fehler nachstellen?
+      placeholder: |
+        1. Oeffne das Dashboard
+        2. Klicke auf "Aktive Sessions"
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Betroffener Bereich
+      options:
+        - Dashboard
+        - Aktive Sessions
+        - Statistiken
+        - Wiedergabe-Verlauf
+        - Einstellungen
+        - Backend / API
+        - Sonstiges
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / Umgebung
+      description: Welchen Browser und welches Betriebssystem nutzt du?
+      placeholder: "Firefox 128 / Linux"
+
+  - type: input
+    id: version
+    attributes:
+      label: FinStat-Version / Commit
+      description: Welche Version oder welchen Commit nutzt du?
+      placeholder: "develop @ abc1234"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: Fuege relevante Konsolenausgaben oder Screenshots ein.
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Zusaetzlicher Kontext
+      description: Gibt es weitere Informationen, die helfen koennten?
