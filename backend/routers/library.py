@@ -4,8 +4,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings, get_settings
+from database import get_db
+from services.cache import CacheService
 from services.jellyfin import JellyfinService
 
 router = APIRouter(prefix="/api/library", tags=["Bibliothek"])
@@ -39,8 +42,16 @@ def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> Jellyf
 @router.get("/counts", response_model=LibraryCountsResponse)
 async def get_library_counts(
     service: Annotated[JellyfinService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> LibraryCountsResponse:
     """Gibt die Gesamtanzahl von Filmen, Serien, Episoden und Musik zurueck."""
+    cache = CacheService(db, settings.CACHE_TTL_SECONDS)
+    cached = await cache.get("library_counts")
+
+    if cached is not None:
+        return LibraryCountsResponse(**cached)
+
     try:
         counts = await service.get_library_counts()
     except Exception as exc:
@@ -54,13 +65,15 @@ async def get_library_counts(
     episode = counts.get("EpisodeCount", 0)
     music = counts.get("SongCount", 0)
 
-    return LibraryCountsResponse(
+    result = LibraryCountsResponse(
         movie_count=movie,
         series_count=series,
         episode_count=episode,
         music_count=music,
         total_count=movie + series + episode + music,
     )
+    await cache.set("library_counts", result.model_dump())
+    return result
 
 
 def _parse_recent_item(raw: dict[str, Any]) -> RecentItem:
@@ -78,8 +91,16 @@ def _parse_recent_item(raw: dict[str, Any]) -> RecentItem:
 @router.get("/recent", response_model=list[RecentItem])
 async def get_recent_items(
     service: Annotated[JellyfinService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[RecentItem]:
     """Liefert die letzten 20 hinzugefuegten Medienelemente."""
+    cache = CacheService(db, settings.CACHE_TTL_SECONDS)
+    cached = await cache.get("library_recent")
+
+    if cached is not None:
+        return [RecentItem(**item) for item in cached]
+
     try:
         data = await service.get_items(
             params={
@@ -98,4 +119,6 @@ async def get_recent_items(
         ) from exc
 
     items: list[dict[str, Any]] = data.get("Items", [])
-    return [_parse_recent_item(i) for i in items]
+    result = [_parse_recent_item(i) for i in items]
+    await cache.set("library_recent", [r.model_dump() for r in result])
+    return result

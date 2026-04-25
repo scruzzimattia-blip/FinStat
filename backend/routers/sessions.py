@@ -4,8 +4,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings, get_settings
+from database import get_db
+from services.cache import CacheService
 from services.jellyfin import JellyfinService
 
 router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
@@ -100,8 +103,16 @@ def _parse_session(raw: dict[str, Any]) -> SessionResponse:
 @router.get("/", response_model=list[SessionResponse])
 async def get_sessions(
     service: Annotated[JellyfinService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[SessionResponse]:
     """Liefert alle aktiven Sessions mit Wiedergabe-Metadaten."""
+    cache = CacheService(db, settings.CACHE_TTL_SECONDS)
+    cached = await cache.get("sessions")
+
+    if cached is not None:
+        return [SessionResponse(**s) for s in cached]
+
     try:
         sessions = await service.get_sessions()
     except Exception as exc:
@@ -110,4 +121,6 @@ async def get_sessions(
             detail=f"Jellyfin-Server nicht erreichbar: {exc}",
         ) from exc
 
-    return [_parse_session(s) for s in sessions]
+    result = [_parse_session(s) for s in sessions]
+    await cache.set("sessions", [r.model_dump() for r in result])
+    return result

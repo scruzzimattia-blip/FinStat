@@ -4,8 +4,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings, get_settings
+from database import get_db
+from services.cache import CacheService
 from services.jellyfin import JellyfinService
 
 router = APIRouter(prefix="/api/stats", tags=["Statistiken"])
@@ -28,6 +31,8 @@ def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> Jellyf
 @router.get("/most-watched", response_model=list[MostWatchedItem])
 async def get_most_watched(
     service: Annotated[JellyfinService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> list[MostWatchedItem]:
     """Liefert die meistgeschauten Elemente sortiert nach Wiedergabeanzahl.
@@ -35,6 +40,13 @@ async def get_most_watched(
     Aggregiert ueber alle Nutzer: Fuer jeden Nutzer werden die Elemente
     nach PlayCount sortiert abgefragt und zusammengefuehrt.
     """
+    cache = CacheService(db, settings.CACHE_TTL_SECONDS)
+    cache_key = f"most_watched:{limit}"
+    cached = await cache.get(cache_key)
+
+    if cached is not None:
+        return [MostWatchedItem(**item) for item in cached]
+
     try:
         users = await service.get_users()
     except Exception as exc:
@@ -87,4 +99,6 @@ async def get_most_watched(
         reverse=True,
     )[:limit]
 
-    return [MostWatchedItem(**entry) for entry in sorted_items]
+    result = [MostWatchedItem(**entry) for entry in sorted_items]
+    await cache.set(cache_key, [r.model_dump() for r in result])
+    return result

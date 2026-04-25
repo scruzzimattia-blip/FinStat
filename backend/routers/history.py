@@ -4,8 +4,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Settings, get_settings
+from database import get_db
+from services.cache import CacheService
 from services.jellyfin import JellyfinService
 
 router = APIRouter(prefix="/api/history", tags=["Verlauf"])
@@ -29,9 +32,18 @@ def _get_service(settings: Annotated[Settings, Depends(get_settings)]) -> Jellyf
 @router.get("/", response_model=list[HistoryEntry])
 async def get_watch_history(
     service: Annotated[JellyfinService, Depends(_get_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     limit: Annotated[int, Query(ge=1, le=100)] = 30,
 ) -> list[HistoryEntry]:
     """Liefert die zuletzt abgespielten Elemente aller Nutzer."""
+    cache = CacheService(db, settings.CACHE_TTL_SECONDS)
+    cache_key = f"watch_history:{limit}"
+    cached = await cache.get(cache_key)
+
+    if cached is not None:
+        return [HistoryEntry(**entry) for entry in cached]
+
     try:
         users = await service.get_users()
     except Exception as exc:
@@ -82,4 +94,7 @@ async def get_watch_history(
 
     entries.sort(key=lambda e: e.get("date_played") or "", reverse=True)
 
-    return [HistoryEntry(**e) for e in entries[:limit]]
+    result_dicts = entries[:limit]
+    result = [HistoryEntry(**e) for e in result_dicts]
+    await cache.set(cache_key, [r.model_dump() for r in result])
+    return result
