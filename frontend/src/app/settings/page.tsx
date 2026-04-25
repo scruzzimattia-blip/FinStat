@@ -47,7 +47,9 @@ export default function SettingsPage() {
   const [testMessage, setTestMessage] = useState("");
 
   useEffect(() => {
-    setSettings(loadSettings());
+    queueMicrotask(() => {
+      setSettings(loadSettings());
+    });
   }, []);
 
   function handleSave() {

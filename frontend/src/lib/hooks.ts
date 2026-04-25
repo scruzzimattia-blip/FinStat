@@ -20,10 +20,14 @@ export function useApi<T>(fetcher: () => Promise<T>, intervalMs?: number) {
   }, [fetcher]);
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      void fetchData();
+    });
 
     if (intervalMs) {
-      const interval = setInterval(fetchData, intervalMs);
+      const interval = setInterval(() => {
+        void fetchData();
+      }, intervalMs);
       return () => clearInterval(interval);
     }
   }, [fetchData, intervalMs]);
