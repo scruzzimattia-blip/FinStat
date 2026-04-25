@@ -1,0 +1,64 @@
+name: Feature Request
+description: Schlage ein neues Feature oder eine Verbesserung vor.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hast du eine Idee, die FinStat besser machen wuerde?
+        Beschreibe sie hier moeglichst konkret!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problemstellung
+      description: Welches Problem loest dieses Feature? Was fehlt dir aktuell?
+      placeholder: "Ich wuerde gerne sehen, welche Nutzer am meisten streamen, aber..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Gewuenschte Loesung
+      description: Wie stellst du dir die Umsetzung vor?
+      placeholder: "Ein neues Diagramm auf der Statistik-Seite, das..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Betroffener Bereich
+      options:
+        - Dashboard
+        - Aktive Sessions
+        - Statistiken
+        - Wiedergabe-Verlauf
+        - Einstellungen
+        - Backend / API
+        - Neuer Bereich
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Wie wichtig ist dieses Feature fuer dich?
+      options:
+        - Nice-to-have
+        - Wuerde meine Nutzung verbessern
+        - Blockiert mich aktuell
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativen
+      description: Hast du Workarounds oder andere Loesungsansaetze ueberlegt?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Zusaetzlicher Kontext
+      description: Screenshots, Mockups oder Links zu aehnlichen Features in anderen Tools?

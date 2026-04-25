@@ -1,0 +1,73 @@
+services:
+  # ---- PostgreSQL-Datenbank ----
+  finstat-db:
+    image: postgres:17-alpine
+    container_name: finstat-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-finstat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finstat}
+      POSTGRES_DB: ${POSTGRES_DB:-finstat}
+    volumes:
+      - finstat-db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    networks:
+      - finstat-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finstat} -d ${POSTGRES_DB:-finstat}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---- FastAPI Backend ----
+  finstat-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: finstat-backend
+    restart: unless-stopped
+    depends_on:
+      finstat-db:
+        condition: service_healthy
+    environment:
+      JELLYFIN_URL: ${JELLYFIN_URL:-http://localhost:8096}
+      JELLYFIN_API_KEY: ${JELLYFIN_API_KEY}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-finstat}:${POSTGRES_PASSWORD:-finstat}@finstat-db:5432/${POSTGRES_DB:-finstat}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-30}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - finstat-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ---- Next.js Frontend ----
+  finstat-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: finstat-frontend
+    restart: unless-stopped
+    depends_on:
+      finstat-backend:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - finstat-net
+
+volumes:
+  finstat-db-data:
+    driver: local
+
+networks:
+  finstat-net:
+    driver: bridge

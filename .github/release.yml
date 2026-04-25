@@ -1,0 +1,29 @@
+# Konfiguration fuer automatisch generierte Release-Notes.
+# GitHub gruppiert die Aenderungen anhand der Labels.
+# Siehe: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  categories:
+    - title: "Neue Features"
+      labels:
+        - enhancement
+        - feature
+    - title: "Fehlerbehebungen"
+      labels:
+        - bug
+        - fix
+    - title: "Dokumentation"
+      labels:
+        - documentation
+        - docs
+    - title: "Wartung & CI"
+      labels:
+        - chore
+        - ci
+        - dependencies
+    - title: "Sonstige Aenderungen"
+      labels:
+        - "*"
+  exclude:
+    labels:
+      - skip-changelog

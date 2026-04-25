@@ -1,0 +1,89 @@
+name: Release
+
+# Wird ausgeloest, wenn ein PR von develop nach main gemergt wird.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  release:
+    name: GitHub Release erstellen
+    # Nur ausfuehren, wenn der PR tatsaechlich gemergt wurde (nicht nur geschlossen)
+    # und von develop kommt.
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ----------------------------------------------------------
+      # Naechste SemVer-Version automatisch ermitteln.
+      # Liest das letzte Tag (z.B. v1.2.0) und zaehlt den Patch hoch.
+      # Fuer Minor/Major: manuell taggen oder Conventional Commits nutzen.
+      # ----------------------------------------------------------
+      - name: Naechste Version bestimmen
+        id: version
+        run: |
+          # Letztes SemVer-Tag finden (oder v0.0.0 als Fallback)
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | head -n 1 || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            NEXT_VERSION="v1.0.0"
+            echo "Kein vorheriges Tag gefunden – starte mit $NEXT_VERSION"
+          else
+            echo "Letztes Tag: $LATEST_TAG"
+
+            # Prefix 'v' entfernen und Teile aufsplitten
+            VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+            # Commit-Messages seit dem letzten Tag analysieren
+            COMMITS=$(git log "$LATEST_TAG"..HEAD --pretty=format:"%s" 2>/dev/null || echo "")
+
+            # Version hochzaehlen basierend auf Commit-Praefixen
+            if echo "$COMMITS" | grep -qiE "^(breaking|BREAKING)"; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif echo "$COMMITS" | grep -qiE "^(feat|feature|add)"; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEXT_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Naechste Version: $NEXT_VERSION"
+
+      # ----------------------------------------------------------
+      # Git-Tag erstellen und pushen
+      # ----------------------------------------------------------
+      - name: Tag erstellen
+        run: |
+          git tag "${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.version.outputs.version }}"
+
+      # ----------------------------------------------------------
+      # GitHub Release mit automatisch generierten Release-Notes
+      # ----------------------------------------------------------
+      - name: GitHub Release erstellen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "FinStat ${{ steps.version.outputs.version }}"
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
