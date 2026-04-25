@@ -1,0 +1,24 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# debug
+npm-debug.log*
+
+# env (keep .env.example)
+.env
+.env.local
+.env.production.local
+
+# typescript build
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
